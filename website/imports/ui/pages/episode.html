@@ -1,0 +1,235 @@
+<template name="pages_episode">
+  <div class="container">
+
+    <div class="card card-episode-selection">
+      <div class="card-body">
+        <button type="button" class="btn btn-primary btn-select-prev" disabled="{{$not previousEpisode}}">
+          <i class="fas fa-step-backward"></i>
+          <span class="sr-only">Previous Episode</span>
+        </button>
+        {{#autoForm schema='Schemas.episodeSelection' id='episodeSelectionForm' autosave=true preserveForm=false}}
+          {{> afQuickField name='episodeNumber' options=episodeSelectionOptions defaultValue=episodeSelectionDefaultValue id='episodeNumberSelection'}}
+        {{/autoForm}}
+        <button type="button" class="btn btn-primary btn-select-next" disabled="{{$not nextEpisode}}">
+          <i class="fas fa-step-forward"></i>
+          <span class="sr-only">Next Episode</span>
+        </button>
+      </div>
+    </div>
+
+    {{#if $in 'unknown' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>This video is not working for an unknown reason.</span>
+          <i class="fas fa-exclamation-triangle"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            This is most likely because the video is no longer available. Please try another video.
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'cloudflare' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>Disable the Cloudflare filter to watch this video.</span>
+          <i class="fas fa-cloud"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            <a href="{{selectedStreamerHomepage}}" target="_blank" rel="noopener">Click here to disable the filter.</a>
+            This will open a new tab.
+            There, you will have to wait for this to complete:
+            {{>components_image src="/media/cloudflare-challenge-simple.png" caption="Cloudflare's Loading Indicator" class="disable-cloudflare-filter-image"}}
+            <strong>Return here</strong> once the loading is done and reload this page.
+            You can close the new tab once you are done.
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'mixed-content' iframeErrors}}
+      <div class="card card-mixed-content">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>Disable mixed content protection to watch this video.</span>
+          <i class="fas fa-unlock-alt"></i>
+        </h5>
+        <div class="card-body">
+          {{#if $eq $.BrowserDetect.browser 'Firefox'}}
+            <span>{{> components_image src="/media/firefox-unsafe-1.png" caption="Firefox - Step 1"}}</span>
+            <span>{{> components_image src="/media/firefox-unsafe-2.png" caption="Firefox - Step 2"}}</span>
+            <span>{{> components_image src="/media/firefox-unsafe-3.png" caption="Firefox - Step 3"}}</span>
+          {{/if}}
+          {{#if $eq $.BrowserDetect.browser 'Chrome'}}
+            <span>{{> components_image src="/media/chrome-unsafe-1.png" caption="Chrome - Step 1"}}</span>
+            <span>{{> components_image src="/media/chrome-unsafe-2.png" caption="Chrome - Step 2"}}</span>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'flash' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>This video requires Adobe Flash Player to be played.</span>
+          <i class="fab fa-facebook-f"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            <a href="https://get.adobe.com/flashplayer/" target="_blank" rel="noopener">You can get it here.</a>
+            Make sure to uncheck the optional offers.
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'requires-plugins' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>This video does not work with Iframe Sandboxing.</span>
+          <i class="fas fa-box-open"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            Reload the page and uncheck 'Enable Iframe Sandboxing' below the video.
+            Alternatively, use a different browser.
+            Note that Iframe Sandboxing blocks popups even when not using an adblocker.
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'x-frame-options' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>This video cannot be watched without the companion browser add-on.</span>
+          <i class="fas fa-ban"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            {{>pages_episode_get_addon}}
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if $in 'add-on' iframeErrors}}
+      <div class="card">
+        <h5 class="card-header d-flex justify-content-between">
+          <span>Most issues related to videos not working will be solved by installing the companion browser add-on.</span>
+          <i class="fas fa-puzzle-piece"></i>
+        </h5>
+        <div class="card-body">
+          <p class="card-text">
+            {{>pages_episode_get_addon}}
+          </p>
+        </div>
+      </div>
+    {{/if}}
+
+    <div class="card card-player-container {{#if iframeErrors}}removed{{/if}}">
+      <div class="card-img">
+        {{#if frameSandboxingEnabled}}
+          <iframe id="episode-frame" src="{{selectedSourceUrl}}" allowfullscreen referrerpolicy="no-referrer" title="Episode on {{selectedStreamerName}}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+        {{else}}
+          <iframe id="episode-frame" src="{{selectedSourceUrl}}" allowfullscreen referrerpolicy="no-referrer" title="Episode on {{selectedStreamerName}}"></iframe>
+        {{/if}}
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+          <button type="button" class="btn btn-danger btn-not-working">Video not working?</button>
+          Try another video first.
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="sandboxing-checkbox" checked="{{isChecked frameSandboxingEnabled true}}">
+          <label class="form-check-label" for="sandboxing-checkbox">
+            Enable Iframe Sandboxing
+          </label>
+        </div>
+      </div>
+    </div>
+
+    {{#if $and show.canHaveWatchState currentUser.malCanWrite}}
+      <div class="card">
+        <div class="card-body">
+          {{#autoForm schema='Schemas.WatchState' id='scoreForm' autosave=true autosaveOnKeyup=true class='form-inline'}}
+            <button type="button" class="btn btn-primary btn-watched" disabled="{{episodeWatched}}">
+              {{#if show.hasWatchState}}
+                {{#if isCompletionEpisode}}
+                  Mark Show as Completed
+                {{else}}
+                  Mark Episode as Watched
+                {{/if}}
+              {{else}}
+                {{#if isCompletionEpisode}}
+                  Add Show as Completed
+                {{else}}
+                  Add Show as Watching
+                {{/if}}
+              {{/if}}
+            </button>
+            {{#if show.hasWatchState}}
+              {{> afQuickField name='score' value=show.watchState.score label='Score:'}}
+            {{/if}}
+          {{/autoForm}}
+        </div>
+      </div>
+    {{else if $exists show.malUrl}}
+      <div class="card">
+        <div class="card-body episode-mal-widget-body">
+          <div class="episode-mal-widget-container">
+            <iframe src="{{show.malUrl}}" scrolling="no"></iframe>
+          </div>
+        </div>
+      </div>
+    {{/if}}
+
+    <div class="card">
+      {{#each result in episodesByStreamer}}
+        <div class="card-header">
+          {{result.streamer.name}}
+        </div>
+        <div class="card-body">
+          {{#each episode in result.episodes}}
+            <a role="button" data-sourcename="{{episode.sourceName}}" data-streamerid="{{result.streamer.id}}" tabindex="{{#if (flagsDisabled episode.flags)}}-1{{else}}0{{/if}}" aria-disabled="{{flagsDisabled episode.flags}}"
+               class="btn btn-source {{#if (flagsDisabled episode.flags)}}disabled{{/if}} {{#if $and ($eq selectedSourceName episode.sourceName) ($eq selectedStreamerId result.streamer.id)}}btn-secondary{{else}}btn-primary{{/if}}">
+              {{episode.sourceName}}
+              {{#each flag in episode.flags}}
+                {{#if showIcon flag}}
+                  {{#if $eq flag 'x-frame-options'}}
+                    {{> components_tooltippedIcon class="fas fa-ban" position="top" text="Abuses X-Frame-Options"}}
+                  {{/if}}
+                  {{#if $eq flag 'cloudflare'}}
+                    {{> components_tooltippedIcon class="fas fa-cloud" position="top" text="Uses Cloudflare Filtering"}}
+                  {{/if}}
+                  {{#if $eq flag 'mixed-content'}}
+                    {{> components_tooltippedIcon class="fas fa-unlock-alt" position="top" text="Has Mixed Content"}}
+                  {{/if}}
+                  {{#if $eq flag 'flash'}}
+                    {{> components_tooltippedIcon class="fab fa-facebook-f" position="top" text="Uses Flash Player"}}
+                  {{/if}}
+                  {{#if $eq flag 'requires-plugins'}}
+                    {{> components_tooltippedIcon class="fas fa-box-open" position="top" text="Doesn't Work With Sandboxing"}}
+                  {{/if}}
+                {{/if}}
+              {{/each}}
+            </a>
+          {{/each}}
+        </div>
+      {{/each}}
+    </div>
+
+  </div>
+</template>
+
+<template name="pages_episode_get_addon">
+  {{#if $eq $.BrowserDetect.browser 'Firefox'}}
+    <a class="btn btn-primary" href="https://addons.mozilla.org/firefox/addon/animesentinel-companion-addon/" target="_blank" rel="noopener">
+      Get it here!
+    </a>
+  {{else}}
+    Unfortunately your browser is not supported yet.
+  {{/if}}
+</template>

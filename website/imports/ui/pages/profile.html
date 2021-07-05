@@ -1,0 +1,51 @@
+<template name="pages_profile">
+  <div class="container">
+
+    <div class="card">
+      <div class="card-body">
+        <div class="at-form">
+
+          <div class="at-title">
+            <h3>Change Profile</h3>
+          </div>
+
+          {{#if updateProfileFormError}}
+            <div class="at-error alert alert-danger">
+              <p>{{updateProfileFormError}}</p>
+            </div>
+          {{/if}}
+
+          <div class="at-pwd-form">
+            {{#autoForm schema='Schemas.UserClient' id='updateProfileForm' doc=currentUser validation='keyup'}}
+              {{> afQuickField name='username'}}
+              {{> afObjectField name='profile'}}
+              {{#if showMalUsernameError}}
+                <div class="alert alert-danger" role="alert">
+                  Invalid MAL Username / Private MAL List and Invalid MAL Password
+                </div>
+              {{else if showMalPasswordError}}
+                <div class="alert alert-danger" role="alert">
+                  Invalid MAL Password
+                </div>
+              {{else if showMalSuccess}}
+                <div class="alert alert-success" role="alert">
+                  MAL Credentials Valid
+                </div>
+              {{/if}}
+              {{> afQuickField name='emails'}}
+              <button type="submit" class="btn btn-primary btn-block btn-at-like">Update your profile</button>
+            {{/autoForm}}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        {{> atForm state='changePwd'}}
+      </div>
+    </div>
+
+  </div>
+</template>

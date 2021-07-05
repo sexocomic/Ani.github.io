@@ -1,0 +1,128 @@
+<template name="pages_overview">
+  <div class="container">
+
+    <div class="card card-overview-controls">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-auto">
+            <a target="_blank" rel="noopener" href="https://myanimelist.net/animelist/{{currentUser.profile.malUsername}}">Show On MAL</a>
+            <button type="button" class="btn btn-primary reload-mal-list-btn {{#if currentUser.malListUpdating}}progress-bar-striped progress-bar-animated{{/if}}" disabled="{{currentUser.malListUpdating}}">
+              Reload MAL List
+            </button>
+            <button type="button" class="btn btn-primary reload-all-shows-btn {{#if anyShowWorking}}progress-bar-striped progress-bar-animated{{/if}}" disabled="{{allShowsCached}}">
+              Update All Shows
+            </button>
+          </div>
+          <div class="col-auto">
+            {{#autoForm schema='Schemas.statusesSelection' id='statusesSelectionForm' autosave=true preserveForm=false}}
+              {{> afQuickField name='statuses' value=($getStorageItem 'SelectedStatuses')}}
+            {{/autoForm}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-overview-entries {{#unless loading}}overview-entries-idle{{/unless}}">
+      <ul class="list-group list-group-flush">
+        {{#each show in displayShows}}
+
+          <li class="list-group-item {{show.watchState.status}}">
+            <div class="row">
+              <div class="col-md-2 col-6 mb mb-md-0">
+
+                {{>components_image src=show.thumbnailUrls.[0] caption=show.name class="img-thumbnail w-100 h-auto"}}
+
+              </div>
+              <div class="col-md-3 col-6 mb mb-md-0">
+
+                <h6>
+                  <a href="{{pathFor 'show' showId=show._id}}">{{show.name}}</a>
+                </h6>
+                <dl>
+                  <dt>Episodes:</dt>
+                  <dd>
+                    {{#if $exists show.episodeCount}}
+                      {{show.episodeCount}}
+                    {{else}}
+                      ?
+                    {{/if}}
+                    episodes of {{displayDuration show.episodeDuration}}
+                  </dd>
+                  <dt>Airing:</dt>
+                  <dd>
+                    {{$capitalize (displayAiringDate show.airedStart)}}
+                    -<br>
+                    {{$capitalize (displayAiringDate show.airedEnd)}}
+                  </dd>
+                </dl>
+
+              </div>
+              <div class="col-md-5 mb mb-md-0">
+
+                {{#if episodesToWatch show}}
+                  <div class="card card-watch-episodes">
+                    <div class="list-group list-group-flush">
+                      {{#each episode in (episodesToWatch show)}}
+                        <a class="list-group-item list-group-item-action" href="{{pathFor 'episode' showId=episode.showId translationType=episode.translationType episodeNumStart=episode.safeEpisodeNumStart episodeNumEnd=episode.safeEpisodeNumEnd notes=episode.notesEncoded}}">
+                          Episode {{episode.fancyKey}}
+                        </a>
+                      {{/each}}
+                    </div>
+                  </div>
+                {{/if}}
+                {{#if $eq (show.airingState ($getStorageItem 'SelectedTranslationType')) 'Completed'}}
+                  <div class="alert alert-success" role="alert">Finished Airing</div>
+                {{else}}
+                  <div class="alert
+                    {{#if $not ($exists (show.nextEpisodeInterval ($getStorageItem 'SelectedTranslationType')))}}
+                      alert-warning
+                    {{else if $lt (show.nextEpisodeInterval ($getStorageItem 'SelectedTranslationType')) 0}}
+                      alert-danger
+                    {{else}}
+                      alert-success
+                    {{/if}}
+                  " role="alert">
+                    Next episode
+                    {{#if $lt (show.nextEpisodeInterval ($getStorageItem 'SelectedTranslationType')) 0}}
+                      should have aired
+                    {{else}}
+                      airs
+                    {{/if}}
+                    {{displayInterval (show.nextEpisodeInterval ($getStorageItem 'SelectedTranslationType')) true}},
+                    <br>
+                    on {{displayUploadDate (show.nextEpisodeDate ($getStorageItem 'SelectedTranslationType'))}}.
+                  </div>
+                {{/if}}
+
+              </div>
+              <div class="col-md-2">
+
+                <button type="button" class="btn btn-primary reload-show-btn {{#if show.locked}}progress-bar-striped progress-bar-animated{{/if}}" data-showid="{{show._id}}" disabled="{{$not show.expired}}">
+                  Updat{{#if show.locked}}ing{{else}}e{{/if}} Show
+                </button>
+
+              </div>
+            </div>
+          </li>
+
+        {{else unless loading}}
+          <li class="list-group-item">
+            <div class="alert alert-info text-center" role="alert">
+              No Entries
+            </div>
+          </li>
+        {{/each}}
+
+        <li class="list-group-item {{#unless loading}}removed{{/unless}}" id="load-more-items">
+          <div class="alert alert-info text-center" role="alert">
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar"></div>
+            </div>
+            Loading More Entries ...
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</template>

@@ -1,0 +1,132 @@
+@charset "UTF-8";
+@import "../node_modules/bootstrap/scss/functions";
+
+////////////////////////////
+// Custom Variables Start //
+////////////////////////////
+
+$thumbnail-height: 220px !default;
+$mal-watching-color: #2db039 !default;
+$mal-completed-color: #26448f !default;
+$mal-held-color: #f1c83e !default;
+$mal-dropped-color: #a12f31 !default;
+$mal-planned-color: #c3c3c3 !default;
+
+//////////////////////////
+// Custom Variables End //
+//////////////////////////
+
+@import "../node_modules/bootstrap/scss/variables";
+@import "../node_modules/bootstrap/scss/mixins";
+
+////////////////////////
+// Custom Definitions //
+////////////////////////
+
+@mixin hidden() {
+  visibility: hidden !important;
+  user-select: none !important;
+}
+
+.hidden {
+  @include hidden;
+}
+
+@mixin removed() {
+  @include hidden;
+  display: none !important;
+}
+
+.removed {
+  @include removed;
+}
+
+@mixin semi-removed() {
+  @include hidden;
+  overflow: hidden !important;
+  border: none !important;
+  height: 0;
+  width: 0;
+}
+
+.semi-removed {
+  @include semi-removed;
+}
+
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include media-breakpoint-up($breakpoint) {
+    .hidden-#{$breakpoint}-up {
+      @include hidden;
+    }
+    .removed-#{$breakpoint}-up {
+      @include removed;
+    }
+    .semi-removed-#{$breakpoint}-up {
+      @include semi-removed;
+    }
+  }
+
+  @include media-breakpoint-down($breakpoint) {
+    .hidden-#{$breakpoint}-down {
+      @include hidden;
+    }
+    .removed-#{$breakpoint}-down {
+      @include removed;
+    }
+    .semi-removed-#{$breakpoint}-down {
+      @include semi-removed;
+    }
+  }
+
+  @include media-breakpoint-only($breakpoint) {
+    .hidden-#{$breakpoint}-only {
+      @include hidden;
+    }
+    .removed-#{$breakpoint}-only {
+      @include removed;
+    }
+    .semi-removed-#{$breakpoint}-only {
+      @include semi-removed;
+    }
+  }
+}
+
+.p {
+  padding: $spacer;
+}
+
+.pb {
+  padding-bottom: $spacer;
+}
+
+.pt {
+  padding-top: $spacer;
+}
+
+.pl {
+  padding-left: $spacer;
+}
+
+.pr {
+  padding-right: $spacer;
+}
+
+.m {
+  margin: $spacer;
+}
+
+.mb {
+  margin-bottom: $spacer;
+}
+
+.mt {
+  margin-top: $spacer;
+}
+
+.ml {
+  margin-left: $spacer;
+}
+
+.mr {
+  margin-right: $spacer;
+}

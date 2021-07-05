@@ -1,0 +1,155 @@
+<template name="pages_search">
+  <div class="container">
+
+    <div class="preset-button-container">
+      <button type="button" class="btn btn-primary btn-preset-recent">Recent Episodes</button>
+      <button type="button" class="btn btn-primary btn-preset-season">Current Season</button>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        {{#autoForm schema='Schemas.Search' id='animeSearchFormQuery' autosave=true autosaveOnKeyup=true preserveForm=false trimStrings=false}}
+          {{> afQuickField name='query' value=searchOptions.query}}
+        {{/autoForm}}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        {{#autoForm schema='Schemas.Search' id='animeSearchFormSorting' autosave=true autosaveOnKeyup=true preserveForm=false}}
+          {{> afQuickField name='sortBy' value=searchOptions.sortBy}}
+          {{> afQuickField name='sortDirection' value=searchOptions.sortDirection disabled=sortDirectionDisabled}}
+        {{/autoForm}}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header collapsed btn-unstyled btn-collapse" data-toggle="collapse" data-target="#animeSearchFormOptionsCollapse" aria-expanded="false" aria-controls="animeSearchFormOptionsCollapse">
+        <i class="fas fa-caret-right"></i>
+        More Search Options
+      </div>
+      <div class="card-body collapse" id="animeSearchFormOptionsCollapse">
+        {{#autoForm schema='Schemas.Search' id='animeSearchFormOptions' autosave=true autosaveOnKeyup=true preserveForm=false}}
+          {{> afQuickField name='types' value=searchOptions.types}}
+          {{> afQuickField name='includeTypes' value=searchOptions.includeTypes}}
+          {{> afQuickField name='genres' value=searchOptions.genres}}
+          {{> afQuickField name='includeGenres' value=searchOptions.includeGenres}}
+          <div class="row mb">
+            <div class="col-auto">
+              <button type="button" class="btn btn-primary btn-prev-season h-100">
+                <i class="fas fa-chevron-left"></i>
+                <span class="sr-only">Previous Season</span>
+              </button>
+            </div>
+            <div class="col">
+              <div class="row">
+                <div class="col-sm">
+                  {{> afQuickField name='season' value=searchOptions.season formgroup-class='mb-sm-0'}}
+                </div>
+                <div class="col-sm">
+                  {{> afQuickField name='year' value=searchOptions.year formgroup-class='mb-0'}}
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-primary btn-next-season h-100">
+                <i class="fas fa-chevron-right"></i>
+                <span class="sr-only">Next Season</span>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" id="animeSearchFormOptionsReset">Reset</button>
+        {{/autoForm}}
+      </div>
+    </div>
+
+    <div class="card card-result-container">
+      <div class="card-body">
+        {{#each show in shows}}
+
+          <a class="card card-show-item {{show.watchState.status}}" href="{{pathFor 'show' showId=show._id}}">
+            <div class="card-header">
+              <span class="card-text">
+                {{#if show.watchState}}
+                  <span class="badge badge-pill {{show.watchState.status}}">
+                    <abbr title="{{show.watchState.fancyStatus}}">{{show.watchState.shortStatus}}</abbr>
+                  </span>
+                {{/if}}
+                {{show.name}}
+              </span>
+            </div>
+            <div class="card-img-info">
+              {{#if show.type}}
+                <div class="card-img-info-left card-img-info-broken">
+                  {{show.type}}
+                </div>
+              {{/if}}
+              <div class="card-img-info-spacer"></div>
+              {{#if show.season}}
+                <div class="card-img-info-right">
+                  {{displaySeason show.season}}
+                </div>
+              {{/if}}
+            </div>
+            {{>components_image src=show.thumbnailUrls.[0] caption=show.name class="card-img-center"}}
+            <div class="card-img-info">
+              {{#if $or ($exists show.episodeCount) ($exists show.episodeDuration)}}
+                <div class="card-img-info-left">
+                  {{#if $exists show.episodeCount}}
+                    {{show.episodeCount}}
+                  {{else}}
+                    ?
+                  {{/if}}
+                  {{#if $eq show.episodeCount 1}}
+                    <abbr title="episode">ep</abbr>
+                  {{else}}
+                    <abbr title="episodes">eps</abbr>
+                  {{/if}}
+                  {{#if $exists show.episodeDuration}}
+                    of {{displayDuration show.episodeDuration}}
+                  {{/if}}
+                </div>
+              {{/if}}
+              <div class="card-img-info-spacer"></div>
+            </div>
+            {{#if hasLatestEpisode show}}
+              <a class="card-footer" href="{{latestEpisodeLink show}}">
+                <span class="card-text">
+                  {{#if latestEpisodeWatched show}}
+                    <span class="badge badge-pill badge-success">
+                      <abbr title="Watched"><i class="fas fa-check"></i></abbr>
+                    </span>
+                  {{/if}}
+                  Episode {{latestEpisodeNumbers show}}
+                </span>
+                {{#if latestEpisodeNotes show}}
+                  <span class="card-text">{{latestEpisodeNotes show}}</span>
+                {{/if}}
+              </a>
+            {{else}}
+              <div class="card-footer">
+                <span class="card-text">
+                  {{$capitalize (displayUploadDate (show.nextEpisodeDate ($getStorageItem 'SelectedTranslationType')) true)}}
+                </span>
+              </div>
+            {{/if}}
+          </a>
+
+        {{else unless showsLoading}}
+          <div class="alert alert-info text-center w-100" role="alert">
+            No Results Found
+          </div>
+        {{/each}}
+
+        <div class="alert alert-info text-center w-100 {{#unless showsLoading}}removed{{/unless}}" role="alert" id="load-more-results">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar"></div>
+          </div>
+          Loading More Results ...
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</template>

@@ -1,0 +1,372 @@
+<template name="pages_show">
+  <div class="modal" id="seriesMapModal" tabindex="-1" role="dialog" aria-labelledby="seriesMapModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+
+          <h5 class="modal-title" id="seriesMapModalTitle">Series Map</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+
+        </div>
+        <div class="modal-body">
+
+          {{#if relatedShowsLoading}}
+            <div class="alert alert-info text-center" role="alert">
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar"></div>
+              </div>
+              Updating Related Shows ...
+            </div>
+          {{/if}}
+
+          {{#each mainBlock in show.seriesMap}}
+            <div class="card card-related-shows">
+              <a href="{{pathFor 'show' showId=mainBlock.root._id}}" class="card-header">
+                {{mainBlock.root.name}}
+              </a>
+              {{#if mainBlock.items}}
+                <div class="card-body">
+                  <dl class="row">
+                    {{#each subBlock in mainBlock.items}}
+                      <dt class="col-sm-3">
+                        {{#if $neq @index 0}}
+                          <hr>
+                        {{/if}}
+                        <span>{{$capitalize subBlock.relation}}:</span>
+                      </dt>
+                      <dd class="col-sm-9">
+                        {{#if $neq @index 0}}
+                          <hr class="removed-xs-down">
+                        {{/if}}
+                        {{#each subShow in subBlock.shows}}
+                          <a href="{{pathFor 'show' showId=subShow._id}}">{{subShow.name}}</a>;
+                        {{/each}}
+                      </dd>
+                    {{/each}}
+                  </dl>
+                </div>
+              {{/if}}
+            </div>
+          {{/each}}
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">
+
+        <div class="card">
+          <div id="thumbnailCarousel" class="carousel slide carousel-fade card-img" data-ride="carousel">
+            <ol class="carousel-indicators">
+              {{#each thumbnailUrl in show.thumbnailUrls}}
+                <li data-target="#thumbnailCarousel" data-slide-to="{{@index}}" class="{{$firstActive @index}}"></li>
+              {{/each}}
+            </ol>
+            <div class="carousel-inner">
+              {{#each thumbnailUrl in show.thumbnailUrls}}
+                <div class="carousel-item {{$firstActive @index}}">
+                  <img src="{{thumbnailUrl}}" alt="Thumbnail {{$addOne @index}}">
+                </div>
+              {{/each}}
+            </div>
+          </div>
+          <div id="thumbnailCarouselFake" class="semi-removed">
+            {{#each thumbnailUrl in show.thumbnailUrls}}
+              <img class="w-100 h-auto" src="{{thumbnailUrl}}" alt="Hidden Thumbnail {{$addOne @index}}">
+            {{/each}}
+          </div>
+        </div>
+
+        {{#if $and show.canHaveWatchState currentUser.malCanWrite}}
+          <div class="card {{show.watchState.status}}">
+            <div class="card-header">
+              MAL Status:
+            </div>
+            <div class="card-body">
+              {{#autoForm schema='Schemas.WatchState' id='malStatusForm' doc=malStatusDoc autosave=true autosaveOnKeyup=true}}
+                {{> afQuickField name='status'}}
+                {{#if $eq malStatusDoc.status 'watching'}}
+                  {{> afQuickField name='rewatching'}}
+                {{/if}}
+                {{> afQuickField name='episodesWatched'}}
+                {{> afQuickField name='score'}}
+                {{#if show.hasWatchState}}
+                  <button type="button" class="btn btn-primary btn-block btn-remove-status">Remove From List</button>
+                {{else}}
+                  <button type="submit" class="btn btn-primary btn-block btn-submit-status">Add To List</button>
+                {{/if}}
+              {{/autoForm}}
+            </div>
+          </div>
+        {{else if $exists show.malUrl}}
+          <div class="card">
+            <div class="card-header">
+              MAL Status:
+            </div>
+            <div class="card-body show-mal-widget-body">
+              <div class="show-mal-widget-container show-mal-widget-status">
+                <iframe src="{{show.malUrl}}" scrolling="no"></iframe>
+              </div>
+              <div class="show-mal-widget-container show-mal-widget-episodes">
+                <iframe src="{{show.malUrl}}" scrolling="no"></iframe>
+              </div>
+              <div class="show-mal-widget-container show-mal-widget-score">
+                <iframe src="{{show.malUrl}}" scrolling="no"></iframe>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="card">
+          <div class="card-header">
+            External Links:
+          </div>
+          <ul class="list-group list-group-flush">
+            {{#each streamer in show.streamersCleaned}}
+              <a target="_blank" rel="noopener" href="{{streamer.url}}" class="list-group-item list-group-item-action">
+                {{streamer.name}} ({{displayTranslationType streamer.type}})
+              </a>
+            {{/each}}
+          </ul>
+        </div>
+
+      </div>
+      <div class="col-md-9">
+
+        <div class="card card-alt-names">
+          <div class="card-header font-italic">
+            {{#each altName in show.altNames}}
+              {{altName}};
+            {{/each}}
+          </div>
+          <div class="card-show-more">
+            <i class="fas fa-angle-double-down"></i>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <p class="card-text">
+              {{#if show.description}}
+                {{{show.description}}}
+              {{else}}
+                No Description Available.
+              {{/if}}
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-6">
+                <dl>
+                  <dt>Type:</dt>
+                  <dd>
+                    {{#if $exists show.type}}
+                      <a href="{{pathFor 'search' query=(queryType show.type)}}">{{show.type}}</a>
+                    {{else}}
+                      Unknown type
+                    {{/if}}
+                  </dd>
+                  <dt>Genres:</dt>
+                  <dd>
+                    {{#each genre in show.genres}}
+                      <a href="{{pathFor 'search' query=(queryGenre genre)}}">{{genre}}</a>;
+                    {{else}}
+                      Unknown genres
+                    {{/each}}
+                  </dd>
+                  <dt>Rating:</dt>
+                  <dd>
+                    {{#if $exists show.rating}}
+                      {{show.rating}}
+                    {{else}}
+                      Unknown rating
+                    {{/if}}
+                  </dd>
+                  <dt>Episodes:</dt>
+                  <dd>
+                    {{#if $exists show.episodeCount}}
+                      {{show.episodeCount}}
+                    {{else}}
+                      ?
+                    {{/if}}
+                    episodes of {{displayDuration show.episodeDuration}}
+                  </dd>
+                </dl>
+              </div>
+              <div class="col-sm-6">
+                <dl>
+                  <dt>Season:</dt>
+                  <dd>
+                    {{#if show.season}}
+                      <a href="{{pathFor 'search' query=(querySeason show.season)}}">
+                        {{$capitalize (displaySeason show.season)}}
+                      </a>
+                    {{else}}
+                      {{$capitalize (displaySeason show.season)}}
+                    {{/if}}
+                  </dd>
+                  <dt>Airing:</dt>
+                  <dd>
+                    {{$capitalize (displayAiringDate show.airedStart)}}
+                    -<br>
+                    {{$capitalize (displayAiringDate show.airedEnd)}}
+                  </dd>
+                  <dt>Original Broadcast:</dt>
+                  <dd>
+                    Every {{displayInterval show.broadcastInterval}}
+                    {{#if $eq show.broadcastInterval 604800000}}
+                      on {{displayBroadcastDay show.airedStart}}
+                    {{/if}}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-related-shows {{#unless show.relatedShows}}removed{{/unless}}">
+          <div class="card-header collapsed btn-unstyled btn-collapse" data-toggle="collapse" data-target="#relatedShowsCollapse" aria-expanded="false" aria-controls="relatedShowsCollapse">
+            <i class="fas fa-caret-right"></i>
+            Related Shows:
+          </div>
+          <div class="card-body collapse" id="relatedShowsCollapse">
+            <dl class="row">
+              {{#each subBlock in show.relatedShowsExpanded}}
+                <dt class="col-sm-3">
+                  {{#if $neq @index 0}}
+                    <hr>
+                  {{/if}}
+                  <span>{{$capitalize subBlock.relation}}:</span>
+                </dt>
+                <dd class="col-sm-9">
+                  {{#if $neq @index 0}}
+                    <hr class="removed-xs-down">
+                  {{/if}}
+                  {{#each subShow in subBlock.shows}}
+                    <a href="{{pathFor 'show' showId=subShow._id}}">{{subShow.name}}</a>;
+                  {{/each}}
+                </dd>
+              {{/each}}
+            </dl>
+          </div>
+          <button type="button" class="btn btn-primary card-footer" data-toggle="modal" data-target="#seriesMapModal">
+            Open Series Map
+          </button>
+        </div>
+
+        <div class="accordion" id="episodeListAccordion">
+          {{>pages_show_episodes translationType='sub'}}
+          {{>pages_show_episodes translationType='dub'}}
+          {{>pages_show_episodes translationType='raw'}}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>
+
+<template name="pages_show_episodes">
+  <div class="card">
+    <div id="episodeList-heading-{{translationType}}"
+         class="btn-unstyled btn-collapse collapsed card-header"
+         data-toggle="collapse"
+         data-target="#episodeList-collapse-{{translationType}}"
+         aria-expanded="false"
+         aria-controls="episodeList-collapse-{{translationType}}">
+
+      <div class="row justify-content-between">
+        <div class="col-auto">
+          <i class="fas fa-caret-right"></i>
+          {{displayTranslationType translationType}}:
+        </div>
+        <div class="col-auto">
+          {{$dot show.availableEpisodes translationType}}
+          {{#if $exists show.episodeCount}}
+            / {{show.episodeCount}}
+          {{/if}}
+          episodes
+        </div>
+      </div>
+
+    </div>
+    <ul id="episodeList-collapse-{{translationType}}"
+         class="collapse list-group list-group-flush"
+         aria-labelledby="episodeList-heading-{{translationType}}"
+         data-parent="#episodeListAccordion">
+
+      {{#if $neq (show.airingState translationType) 'Completed'}}
+        <li class="list-group-item">
+          <div class="row justify-content-between">
+            <div class="col-auto">
+              Next episode
+              {{#if $lt (show.nextEpisodeInterval translationType) 0}}
+                should have aired
+              {{else}}
+                airs
+              {{/if}}
+              {{displayInterval (show.nextEpisodeInterval translationType) true}}
+            </div>
+            <div class="col-auto">
+              on {{displayUploadDate (show.nextEpisodeDate translationType)}}
+            </div>
+          </div>
+        </li>
+      {{/if}}
+
+      {{#if episodesLoading}}
+        <li class="list-group-item">
+          <div class="alert alert-info text-center" role="alert">
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar"></div>
+            </div>
+            Loading More Episodes ...
+          </div>
+        </li>
+      {{/if}}
+
+      {{#each episode in (show.episodeList translationType)}}
+        <a class="list-group-item list-group-item-action"
+           href="{{pathFor 'episode' showId=episode.showId translationType=episode.translationType episodeNumStart=episode.safeEpisodeNumStart episodeNumEnd=episode.safeEpisodeNumEnd notes=episode.notesEncoded}}">
+          <div class="row justify-content-between">
+            <div class="col-auto">
+              <h6>
+                {{#if episode.watched}}
+                  <span class="badge badge-success">
+                    <i class="fas fa-check"></i> Watched
+                  </span>
+                {{/if}}
+                Episode {{episode.fancyKey}}
+              </h6>
+              {{displayUploadDate episode.uploadDate}}
+            </div>
+            <div class="col-auto">
+              <ul>
+                {{#each streamer in episode.streamers}}
+                  <li>
+                    <a href="{{streamer.sourceUrl}}" target="_blank" rel="noopener">{{streamer.name}}</a>
+                  </li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+        </a>
+
+      {{else unless episodesLoading}}
+        <li class="list-group-item">
+          <div class="alert alert-info text-center" role="alert">
+            No Episodes Yet
+          </div>
+        </li>
+      {{/each}}
+
+    </ul>
+  </div>
+</template>
